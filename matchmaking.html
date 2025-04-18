@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Matchmaking</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f4f4f4;
+      font-family: sans-serif;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #007f00;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #007f00;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005d00;
+    }
+  </style>
+</head>
+<body>
+  <h1>Online Matchmaking</h1>
+  <button id="find-match-btn">Find Match</button>
+  <div id="status"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const findBtn = document.getElementById("find-match-btn");
+    const statusDiv = document.getElementById("status");
+
+    findBtn.addEventListener("click", () => {
+      statusDiv.textContent = "Looking for opponent...";
+      socket.emit("quickMatch");
+      findBtn.disabled = true;
+    });
+
+    socket.on("waitingForMatch", () => {
+      statusDiv.textContent = "Waiting for another player to join...";
+    });
+
+    socket.on("matched", ({ roomId, player }) => {
+      statusDiv.textContent = "Match found! Redirecting...";
+      setTimeout(() => {
+        window.location.href = `pvp.html?room=${roomId}&player=${player}`;
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

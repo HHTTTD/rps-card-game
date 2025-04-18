@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Mode - RPS Card Game</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    .mode-container {
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    .mode-title {
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+
+    .mode-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      font-size: 20px;
+      padding: 15px 30px;
+      background-color: #007f00;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .mode-btn:hover {
+      background-color: #005c00;
+    }
+  </style>
+</head>
+<body>
+  <div class="mode-container">
+    <h1 class="mode-title">🎮 Choose Game Mode</h1>
+    <div class="mode-buttons">
+      <button class="mode-btn" onclick="location.href='index.html'">🤖 Play vs Bot</button>
+      <button class="mode-btn" onclick="location.href='pvp.html'">🧑‍🤝‍🧑 Multiplayer (PvP)</button>
+    </div>
+  </div>
+</body>
+</html>

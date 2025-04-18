@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multiplayer PvP</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!-- Loader -->
+  <div id="loader-overlay">
+    <div id="loader-text">Waiting for opponent to join...</div>
+  </div>
+
+  <div class="game-container" id="game-ui" style="display: none;">
+    <!-- Opponent -->
+    <div class="bot">
+      <img src="assets/images/img/c8b5af644892fef4 (1).png" alt="Opponent Avatar" class="avatar" />
+      <div class="health" id="bot-health">❤️❤️❤️❤️❤️</div>
+    </div>
+
+    <!-- Battlefield -->
+    <div class="battlefield">
+      <h2>Battlefield</h2>
+      <div class="timer" id="turn-timer">Time left: <span id="timer-count">10</span> sec</div>
+      <div class="field-cards">
+        <div class="card-slot" id="player-card1"></div>
+        <div class="card-slot" id="player-card2"></div>
+        <div class="vs">VS</div>
+        <div class="card-slot" id="bot-card1"></div>
+        <div class="card-slot" id="bot-card2"></div>
+      </div>
+      <div class="buttons">
+        <button id="end-turn">End Turn</button>
+        <button id="reset-selection">Reset</button>
+        <button id="surrender">Surrender</button>
+      </div>
+    </div>
+
+    <!-- Player -->
+    <div class="player">
+      <img src="assets/images/img/chpic.su_-_flopia_007.png" alt="Player Avatar" class="avatar" />
+      <div class="health" id="player-health">❤️❤️❤️❤️❤️</div>
+    </div>
+
+    <!-- Player's Hand -->
+    <div class="hand" id="player-hand">
+      <h3>Your Hand</h3>
+      <div class="hand-cards" id="hand-cards"></div>
+      <p id="deck-count">Deck: 18 cards</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="assets/js/pvp.js"></script>
+  <script>
+    const socket = io();
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get("room");
+    const player = urlParams.get("player");
+
+    if (room && player) {
+      socket.emit("joinRoom", { roomId: room, player: parseInt(player) });
+      socket.on("startGame", () => {
+        document.getElementById("loader-overlay").style.display = "none";
+        document.getElementById("game-ui").style.display = "block";
+        window.startPvpGame({ roomId: room, playerIndex: parseInt(player), socket });
+      });
+    } else if (localStorage.getItem("pvpRoom") && localStorage.getItem("pvpPlayer")) {
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("game-ui").style.display = "block";
+      window.resumeGame(socket);
+    } else {
+      document.getElementById("loader-text").textContent = "Invalid room or player.";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .game-container {
+    max-width: 900px;
+    margin: auto;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+  }
+  
+  .health {
+    font-size: 24px;
+    margin-top: 5px;
+  }
+  
+  .battlefield {
+    margin: 20px 0;
+    padding: 10px;
+    background: #ffffff;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+  }
+  
+  .timer {
+    font-size: 20px;
+    color: #d40000;
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  
+  .field-cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 10px 0;
+  }
+  
+  .card-slot {
+    width: 60px;
+    height: 90px;
+    border: 2px dashed #aaa;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .vs {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 10px;
+  }
+  
+  .hand-cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .card {
+    width: 60px;
+    height: 90px;
+    background: #eee;
+    border: 2px solid #999;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .card.selected {
+    border-color: green;
+    background: #dfffdc;
+  }
+  
+  .card img,
+  .card-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  /* ✅ ไพ่ขึ้นมือแบบสมูท */
+  .card.fade-in {
+    animation: fadeInCard 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeInCard {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .buttons {
+    margin-top: 10px;
+  }
+  
+  button {
+    padding: 8px 16px;
+    margin: 0 5px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  #deck-count {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #333;
+  }
+
+  .card.fade-in {
+    animation: fadeInCard 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeInCard {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .selectable {
+    border: 2px solid green !important;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  
+  .selectable:hover {
+    transform: scale(1.05);
+  }
+  
+  
+  

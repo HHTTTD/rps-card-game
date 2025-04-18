@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create PvP Room</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background: #f4f4f4;
+    }
+
+    .create-room-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    #room-link {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #create-room-btn {
+      background-color: #1abc9c;
+      color: white;
+    }
+
+    #copy-link-btn {
+      background-color: #3498db;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="create-room-container">
+    <h1>Create PvP Room</h1>
+    <button id="create-room-btn">🎲 Create Room</button>
+
+    <div id="room-link-container" style="display:none; margin-top: 20px;">
+      <p>Share this link with your friend:</p>
+      <input type="text" id="room-link" readonly />
+      <button id="copy-link-btn">📋 Copy Link</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("create-room-btn").addEventListener("click", () => {
+      const roomId = "room" + Math.random().toString(36).substring(2, 8);
+      const link = `${window.location.origin}/pvp.html?room=${roomId}&player=1`;
+      document.getElementById("room-link").value = link;
+      document.getElementById("room-link-container").style.display = "block";
+    });
+
+    document.getElementById("copy-link-btn").addEventListener("click", () => {
+      const input = document.getElementById("room-link");
+      input.select();
+      input.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("✅ Link copied to clipboard!");
+    });
+  </script>
+</body>
+</html>
