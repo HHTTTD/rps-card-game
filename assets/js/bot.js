@@ -206,52 +206,65 @@ async function handlePlayerTurn() {
   function promptSelectReturnCard() {
   const card1 = document.getElementById('player-card1');
   const card2 = document.getElementById('player-card2');
-  
-  // Show the actual cards for selection
+  const botCard1 = document.getElementById('opponent-card1');
+  const botCard2 = document.getElementById('opponent-card2');
+
+  // Show all cards clearly
   setCardImage('player-card1', gameState.fieldCards[0]);
   setCardImage('player-card2', gameState.fieldCards[1]);
-  
-  // Also reveal bot's cards
-  setCardImage('bot-card1', gameState.botFieldCards[0]);
-  setCardImage('bot-card2', gameState.botFieldCards[1]);
-  
+  setCardImage('opponent-card1', gameState.botFieldCards[0]);
+  setCardImage('opponent-card2', gameState.botFieldCards[1]);
+
+  // Make player cards selectable
   card1.classList.add('selectable');
   card2.classList.add('selectable');
-  
-    function selectReturn(index) {
-      const keepIndex = index;
+
+  // Add hover effect
+  card1.classList.add('hoverable');
+  card2.classList.add('hoverable');
+
+  // Clear previous event listeners
+  card1.onclick = null;
+  card2.onclick = null;
+
+  // Add new event listeners
+  card1.onclick = () => selectReturn(0);
+  card2.onclick = () => selectReturn(1);
+
+  function selectReturn(index) {
+    // Remove hover and selectable effects
+    card1.classList.remove('selectable', 'hoverable');
+    card2.classList.remove('selectable', 'hoverable');
+    
+    const keepIndex = index;
     const playCard = gameState.fieldCards[keepIndex === 0 ? 1 : 0];
     const returnCard = gameState.fieldCards[keepIndex];
-    
+
     // Return one card to hand
     gameState.hand.push(returnCard);
-    
+
     // Set battle card
     gameState.battleCard = playCard;
     gameState.fieldCards = [playCard];
-    
+
     // Bot randomly selects a card to keep
     const botKeepIndex = Math.floor(Math.random() * 2);
     gameState.botBattleCard = gameState.botFieldCards[botKeepIndex];
     gameState.botFieldCards = [gameState.botBattleCard];
-    
+
+    // Update UI
     renderHand();
     renderField();
-    
+
     // Clean up
-    card1.classList.remove('selectable');
-    card2.classList.remove('selectable');
     card1.onclick = null;
     card2.onclick = null;
-    
-    // Resolve battle
+
+    // Resolve battle after a delay
     setTimeout(() => {
       resolveBattle();
     }, 1000);
   }
-  
-  card1.onclick = () => selectReturn(0);
-  card2.onclick = () => selectReturn(1);
 }
 
 // Resolve battle between cards
@@ -389,19 +402,19 @@ function renderField() {
   // Bot's field cards
   if (gameState.botFieldCards.length > 0) {
     if (gameState.gameLocked) {
-    setCardImage('bot-card1', gameState.botFieldCards[0]);
+    setCardImage('opponent-card1', gameState.botFieldCards[0]);
     if (gameState.botFieldCards.length > 1) {
-      setCardImage('bot-card2', gameState.botFieldCards[1]);
+      setCardImage('opponent-card2', gameState.botFieldCards[1]);
     } else {
-      setCardImage('bot-card2', null);
+      setCardImage('opponent-card2', null);
     }
   } else {
-      setCardImage('bot-card1', 'back');
-      setCardImage('bot-card2', 'back');
+      setCardImage('opponent-card1', 'back');
+      setCardImage('opponent-card2', 'back');
     }
   } else {
-    setCardImage('bot-card1', null);
-    setCardImage('bot-card2', null);
+    setCardImage('opponent-card1', null);
+    setCardImage('opponent-card2', null);
   }
 }
 
