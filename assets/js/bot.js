@@ -155,18 +155,80 @@ function renderHand() {
   }
   
 // Select card from hand
-  function selectCard(index) {
+function selectCard(index) {
   if (gameState.gameLocked) return;
+
+  const cardSlot1 = document.getElementById('player-card1');
+  const cardSlot2 = document.getElementById('player-card2');
   
   if (gameState.selectedCards.includes(index)) {
+    // Remove card from selection
     gameState.selectedCards = gameState.selectedCards.filter(i => i !== index);
+    
+    // Clear the corresponding slot
+    if (gameState.selectedCards.length === 0) {
+      cardSlot1.innerHTML = '';
+      cardSlot2.innerHTML = '';
+    } else {
+      // If one card remains, make sure it's in the first slot
+      const remainingCard = gameState.hand[gameState.selectedCards[0]];
+      cardSlot1.innerHTML = `<img src="${CARDS[remainingCard].image}" alt="${CARDS[remainingCard].type}">`;
+      cardSlot2.innerHTML = '';
+    }
   } else if (gameState.selectedCards.length < 2) {
+    // Add card to selection
     gameState.selectedCards.push(index);
+    
+    // Show card in the appropriate slot with animation
+    const selectedCard = gameState.hand[index];
+    const cardImage = `<img src="${CARDS[selectedCard].image}" alt="${CARDS[selectedCard].type}">`;
+    
+    if (gameState.selectedCards.length === 1) {
+      cardSlot1.style.transform = 'scale(0)';
+      setTimeout(() => {
+        cardSlot1.innerHTML = cardImage;
+        cardSlot1.style.transform = 'scale(1)';
+      }, 150);
+    } else {
+      cardSlot2.style.transform = 'scale(0)';
+      setTimeout(() => {
+        cardSlot2.innerHTML = cardImage;
+        cardSlot2.style.transform = 'scale(1)';
+      }, 150);
+    }
   }
-  
+
   renderHand();
   updateUI();
 }
+
+// Add CSS for card slots and animations
+const style = document.createElement('style');
+style.textContent = `
+  .card-slot {
+    width: 60px;
+    height: 90px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .card-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .card-slot.empty {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+`;
+document.head.appendChild(style);
 
 // Handle player turn
 async function handlePlayerTurn() {
@@ -364,23 +426,22 @@ function showBattleAnnouncement(resultText, resultType, details = '') {
   }, 2000);
 }
 
-// Set card image in slot
+// Update setCardImage function
 function setCardImage(slotId, card) {
   const slot = document.getElementById(slotId);
   if (!slot) return;
-  
-  slot.innerHTML = '';
-  
-  if (card) {
-    const img = document.createElement('img');
-    if (card === 'back') {
-      img.src = 'assets/images/cards/back.png';
-      img.alt = 'Card Back';
-    } else {
-      img.src = CARDS[card].image;
-      img.alt = CARDS[card].type;
-    }
-    slot.appendChild(img);
+
+  if (!card) {
+    slot.innerHTML = '';
+    slot.classList.add('empty');
+    return;
+  }
+
+  slot.classList.remove('empty');
+  if (card === 'back') {
+    slot.innerHTML = `<img src="assets/images/cards/back.png" alt="Card Back">`;
+  } else {
+    slot.innerHTML = `<img src="${CARDS[card].image}" alt="${CARDS[card].type}">`;
   }
 }
 
