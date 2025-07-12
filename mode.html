@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Mode - RPS Card Game</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .mode-container {
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    .mode-title {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #4CAF50;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .mode-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .mode-btn {
+      font-size: 20px;
+      padding: 15px 30px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .mode-btn:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+    }
+
+    .back-btn {
+      font-size: 16px;
+      padding: 10px 20px;
+      background-color: #666;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="mode-container">
+    <h1 class="mode-title">🎮 Choose Game Mode</h1>
+    <div class="mode-buttons">
+      <button class="mode-btn" onclick="location.href='bot.html'">🤖 Play vs Bot</button>
+      <button class="mode-btn" onclick="location.href='matchmaking.html'">🧑‍🤝‍🧑 Multiplayer (PvP)</button>
+    </div>
+    <button class="back-btn" onclick="location.href='index.html'">← Back to Main Menu</button>
+  </div>
+</body>
+</html>

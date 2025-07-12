@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPS Card Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .landing-container {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .game-title {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #4CAF50;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .game-subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #aaa;
+    }
+
+    .start-btn {
+      font-size: 1.5rem;
+      padding: 1rem 2rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .start-btn:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+    }
+
+    .start-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-container">
+    <h1 class="game-title">🎮 RPS Card Game</h1>
+    <p class="game-subtitle">Rock Paper Scissors with a twist!</p>
+    <button class="start-btn" onclick="location.href='mode.html'">Start Game</button>
+  </div>
+</body>
+</html>

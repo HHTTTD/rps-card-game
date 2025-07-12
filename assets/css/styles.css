@@ -1,0 +1,534 @@
+/* Game Theme */
+body {
+    margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-family: 'Arial', sans-serif;
+  color: #ffffff;
+  }
+  
+  .game-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Player Sections */
+.player-section, .opponent-section {
+  padding: 15px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  }
+  
+  .avatar {
+  width: 60px;
+  height: 60px;
+    border-radius: 50%;
+  border: 3px solid #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+.opponent .avatar {
+  border-color: #f44336;
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.3);
+}
+
+.health-bar {
+  flex-grow: 1;
+}
+
+.health-text {
+    font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.player-name {
+  font-size: 18px;
+  color: #aaa;
+}
+
+/* Battlefield */
+  .battlefield {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  padding-bottom: 80px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+    margin: 20px 0;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Battle Arena Header */
+.battle-header {
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.battle-header h2 {
+  display: none; /* Hide the text "Battle Arena" */
+}
+
+.battle-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 60px;
+  background-image: url('assets/images/battle-arena.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Battle Timer and Announcements */
+.timer {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  margin-top: 70px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.timer.waiting {
+  background-color: rgba(255, 152, 0, 0.8);
+}
+
+.timer.ready {
+  background-color: rgba(76, 175, 80, 0.8);
+}
+
+.timer.error {
+  background-color: rgba(244, 67, 54, 0.8);
+  }
+  
+  .field-cards {
+    display: flex;
+  flex-direction: column;
+    align-items: center;
+  gap: 20px;
+}
+
+.card-pair {
+  display: flex;
+  gap: 20px;
+  perspective: 1000px;
+  }
+  
+  .card-slot {
+  width: 80px;
+  height: 120px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.card-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.card-slot.selectable {
+  cursor: pointer;
+  border-color: #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.card-slot.selectable:hover {
+  transform: scale(1.1) translateY(-10px);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.7);
+}
+
+.vs-container {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  }
+  
+  .vs {
+  font-size: 36px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  transform: scale(1);
+  animation: pulse 1.5s infinite;
+}
+
+/* Hand Section */
+.hand-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.hand-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.hand-info h3 {
+  margin: 0;
+  color: #4CAF50;
+    font-size: 24px;
+  }
+  
+  .hand-cards {
+    display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hand-cards .card {
+  width: 80px;
+  height: 120px;
+  transition: all 0.3s ease;
+    cursor: pointer;
+  position: relative;
+}
+
+.hand-cards .card:hover {
+  transform: translateY(-15px);
+}
+
+.hand-cards .card.selected {
+  border: 2px solid #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+}
+
+/* Battle Controls */
+.battle-controls {
+  margin-top: 25px;
+    display: flex;
+    justify-content: center;
+  gap: 15px;
+}
+
+.battle-controls button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-width: 120px;
+}
+
+.battle-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#end-turn {
+  background: linear-gradient(to bottom right, #4CAF50, #45a049);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+#end-turn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+#reset-selection {
+  background: linear-gradient(to bottom right, #2196F3, #1976D2);
+  color: white;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+#reset-selection:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+#surrender {
+  background: linear-gradient(to bottom right, #f44336, #d32f2f);
+  color: white;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+#surrender:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+/* Adjust opponent section to accommodate surrender button */
+.opponent-section {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+}
+
+.player-info.opponent {
+  display: flex;
+    align-items: center;
+  gap: 15px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Card Dealing Animation */
+.card.dealing {
+  animation: dealCard 0.5s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes dealCard {
+  0% {
+    opacity: 0;
+    transform: translateY(-200px) scale(0.5) rotate(-45deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+/* Existing card styles */
+.card {
+  position: relative;
+  width: 60px;
+  height: 90px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+  perspective: 1000px;
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.05);
+  filter: brightness(1.1);
+}
+
+.card.selected {
+  transform: translateY(-15px);
+  filter: brightness(1.2);
+  box-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+/* Battle Announcement */
+.battle-announcement {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  text-align: center;
+  animation: announceIn 0.5s ease-out forwards;
+  padding: 30px 60px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 3px solid;
+}
+
+.announcement-win {
+  border-color: #4CAF50;
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+}
+
+.announcement-lose {
+  border-color: #f44336;
+  box-shadow: 0 0 30px rgba(244, 67, 54, 0.5);
+}
+
+.announcement-draw {
+  border-color: #ffd700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+.battle-announcement h2 {
+  font-size: 48px;
+  margin: 0;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 15px;
+}
+
+.battle-announcement .result-details {
+  font-size: 24px;
+  color: #fff;
+  margin-top: 10px;
+}
+
+.win-text {
+  color: #4CAF50;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.lose-text {
+  color: #f44336;
+  text-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+}
+
+.draw-text {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes announceIn {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  }
+  
+@keyframes announceOut {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Connection Error Message */
+.connection-error {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f44336;
+  color: white;
+  padding: 15px 30px;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+    transform: translate(-50%, -100%);
+      opacity: 0;
+    }
+    to {
+    transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
+
+/* Loading States */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Disable states */
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Button states */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+button.loading {
+  color: transparent;
+  position: relative;
+}
+
+button.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+  

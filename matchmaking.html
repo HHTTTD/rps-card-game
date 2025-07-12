@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Matchmaking - RPS Card Game</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .matchmaking-container {
+      text-align: center;
+      padding: 2rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      color: #4CAF50;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    #status {
+      margin: 1.5rem 0;
+      font-size: 1.2rem;
+      min-height: 2rem;
+    }
+
+    .searching {
+      color: #FFA726;
+    }
+
+    .found {
+      color: #4CAF50;
+    }
+
+    .error {
+      color: #f44336;
+    }
+
+    #find-match-btn {
+      font-size: 1.2rem;
+      padding: 1rem 2rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    #find-match-btn:hover:not(:disabled) {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    #find-match-btn:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background-color: #666;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #555;
+    }
+
+    #cancel-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #cancel-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="location.href='mode.html'">← Back</button>
+  
+  <div class="matchmaking-container">
+    <h1>🎮 Quick Match</h1>
+    <button id="find-match-btn">Find Match</button>
+    <button id="cancel-btn">Cancel Search</button>
+    <div id="status"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const findBtn = document.getElementById("find-match-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const statusDiv = document.getElementById("status");
+    let searchTimeout;
+
+    function updateStatus(message, type = '') {
+      statusDiv.textContent = message;
+      statusDiv.className = type;
+      if (type === 'searching') {
+        statusDiv.classList.add('loading-dots');
+      } else {
+        statusDiv.classList.remove('loading-dots');
+      }
+    }
+
+    findBtn.addEventListener("click", () => {
+      updateStatus("Looking for opponent", 'searching');
+      socket.emit("quickMatch");
+      findBtn.disabled = true;
+      cancelBtn.style.display = 'inline-block';
+      
+      // Timeout after 30 seconds
+      searchTimeout = setTimeout(() => {
+        updateStatus("No opponent found. Please try again.", 'error');
+        findBtn.disabled = false;
+        cancelBtn.style.display = 'none';
+      }, 30000);
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      clearTimeout(searchTimeout);
+      socket.disconnect();
+      socket.connect();
+      findBtn.disabled = false;
+      cancelBtn.style.display = 'none';
+      updateStatus("Search cancelled");
+    });
+
+    socket.on("waitingForMatch", () => {
+      updateStatus("Waiting for opponent", 'searching');
+    });
+
+    socket.on("matched", ({ roomId, player }) => {
+      clearTimeout(searchTimeout);
+      updateStatus("Match found! Redirecting...", 'found');
+      setTimeout(() => {
+        window.location.href = `pvp.html?room=${roomId}&player=${player}`;
+      }, 1500);
+    });
+
+    socket.on("connect_error", () => {
+      updateStatus("Connection error. Please check your internet connection.", 'error');
+      findBtn.disabled = false;
+      cancelBtn.style.display = 'none';
+    });
+
+    socket.on("disconnect", () => {
+      updateStatus("Disconnected from server. Trying to reconnect...", 'error');
+      findBtn.disabled = true;
+      cancelBtn.style.display = 'none';
+    });
+
+    socket.on("connect", () => {
+      if (statusDiv.textContent.includes("Disconnected")) {
+        updateStatus("Reconnected!");
+        findBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

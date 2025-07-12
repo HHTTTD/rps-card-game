@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rock Paper Scissors Battle</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!-- Loader -->
+  <div id="loader-overlay">
+    <div id="loader-text">Waiting for opponent to join...</div>
+  </div>
+
+  <!-- Game UI -->
+  <div id="game-ui" style="display: none;">
+    <div class="game-container">
+      <!-- Opponent Section -->
+      <div class="opponent-section">
+        <div class="player-info opponent">
+      <img src="assets/images/img/c8b5af644892fef4 (1).png" alt="Opponent Avatar" class="avatar" />
+          <div class="health-bar">
+            <div class="health-text" id="opponent-health">❤️❤️❤️❤️❤️</div>
+            <div class="player-name">Opponent</div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Battlefield -->
+    <div class="battlefield">
+        <div class="battle-header">
+          <h2>Battle Arena</h2>
+          <div class="timer" id="turn-timer">Select cards (0/2)</div>
+        </div>
+        
+      <div class="field-cards">
+          <div class="opponent-field">
+            <div class="card-pair">
+              <div class="card-slot" id="opponent-card1"></div>
+              <div class="card-slot" id="opponent-card2"></div>
+            </div>
+          </div>
+          
+          <div class="vs-container">
+            <div class="vs">VS</div>
+          </div>
+          
+          <div class="player-field">
+            <div class="card-pair">
+        <div class="card-slot" id="player-card1"></div>
+        <div class="card-slot" id="player-card2"></div>
+      </div>
+      </div>
+    </div>
+
+        <div class="battle-controls">
+          <div class="bottom-controls">
+            <button id="reset-selection" type="button">Reset</button>
+            <button id="end-turn" type="button">End Turn</button>
+          </div>
+          <div class="top-right-controls">
+            <button id="surrender" type="button">Surrender</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Section -->
+      <div class="player-section">
+        <div class="player-info">
+      <img src="assets/images/img/chpic.su_-_flopia_007.png" alt="Player Avatar" class="avatar" />
+          <div class="health-bar">
+            <div class="health-text" id="player-health">❤️❤️❤️❤️❤️</div>
+            <div class="player-name">You</div>
+          </div>
+    </div>
+
+        <div class="hand-section">
+          <div class="hand-info">
+      <h3>Your Hand</h3>
+            <p id="deck-count">Hand: 3 cards</p>
+          </div>
+      <div class="hand-cards" id="hand-cards"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="assets/js/pvp.js"></script>
+  <script>
+    // Initialize socket with improved configuration
+    const socket = io('http://localhost:3000', {
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 20000,
+      autoConnect: true
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get("room");
+    const player = urlParams.get("player");
+
+    // Enhanced connection event handling
+    socket.on('connect', () => {
+      console.log('Connected to server with ID:', socket.id);
+      console.log('Connection state:', socket.connected);
+      
+      if (room && player) {
+        socket.emit("joinRoom", { roomId: room, player: parseInt(player) }, (response) => {
+          if (response.error) {
+            document.getElementById("loader-text").textContent = `Error joining room: ${response.error}`;
+          }
+        });
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      document.getElementById("loader-text").textContent = `Connection error: ${error.message}. Retrying...`;
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      document.getElementById("loader-text").textContent = `Socket error: ${error.message}`;
+    });
+
+    // Function to check connection status
+    function checkConnection() {
+      if (!socket.connected) {
+        document.getElementById("loader-text").textContent = "Not connected to server. Attempting to reconnect...";
+        return false;
+      }
+      return true;
+    }
+
+    if (room && player) {
+      socket.on("startGame", () => {
+        if (checkConnection()) {
+        document.getElementById("loader-overlay").style.display = "none";
+        document.getElementById("game-ui").style.display = "block";
+        window.startPvpGame({ roomId: room, playerIndex: parseInt(player), socket });
+        }
+      });
+    } else if (localStorage.getItem("pvpRoom") && localStorage.getItem("pvpPlayer")) {
+      if (checkConnection()) {
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("game-ui").style.display = "block";
+      window.resumeGame(socket);
+      }
+    } else {
+      document.getElementById("loader-text").textContent = "Invalid room or player information.";
+    }
+
+    // Add periodic connection check
+    setInterval(() => {
+      if (!socket.connected) {
+        document.getElementById("loader-text").textContent = "Connection lost. Attempting to reconnect...";
+        socket.connect();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
