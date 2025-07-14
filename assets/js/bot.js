@@ -3,7 +3,6 @@ const gameState = {
   health: 5,
   botHealth: 5,
   hand: [],
-  selectedCards: [],
   fieldCards: [],
   botFieldCards: [],
   battleCard: null,
@@ -33,7 +32,6 @@ function initGame() {
   gameState.health = 5;
   gameState.botHealth = 5;
   gameState.hand = [];
-  gameState.selectedCards = [];
   gameState.fieldCards = [];
   gameState.botFieldCards = [];
   gameState.battleCard = null;
@@ -126,7 +124,11 @@ async function addCardToHand(card) {
 // Render player's hand
 function renderHand() {
   const handContainer = document.getElementById('hand-cards');
+  if (!handContainer) return;
+  
   handContainer.innerHTML = '';
+  
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
   
   gameState.hand.forEach((card, index) => {
     const div = document.createElement('div');
@@ -135,70 +137,98 @@ function renderHand() {
     const img = document.createElement('img');
     img.src = CARDS[card].image;
     img.alt = CARDS[card].type;
-      div.appendChild(img);
-  
-    if (!gameState.gameLocked) {
-      div.addEventListener('click', () => {
+    div.appendChild(img);
+    
+    // Only allow clicking cards if not locked and field isn't full
+    if (!gameState.gameLocked && fieldCardCount < 2) {
+      div.style.cursor = 'pointer';
+      div.style.opacity = '1';
+      div.onclick = () => {
         playSound('click');
         selectCard(index);
-      });
+      };
+    } else {
+      div.style.cursor = 'not-allowed';
+      div.style.opacity = '0.7';
+      div.onclick = null;
+      div.classList.add('disabled'); // Add disabled class for visual feedback
     }
-  
-    if (gameState.selectedCards.includes(index)) {
-      div.classList.add('selected');
-      }
-  
-      handContainer.appendChild(div);
-    });
-  
-  document.getElementById('deck-count').textContent = `Hand: ${gameState.hand.length} cards`;
-  }
-  
+    
+    handContainer.appendChild(div);
+  });
+}
+
 // Select card from hand
 function selectCard(index) {
   if (gameState.gameLocked) return;
+  
+  // Count valid cards on field
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  
+  // Don't allow selecting if field is full
+  if (fieldCardCount >= 2) {
+    return;
+  }
 
   const cardSlot1 = document.getElementById('player-card1');
   const cardSlot2 = document.getElementById('player-card2');
   
-  if (gameState.selectedCards.includes(index)) {
-    // Remove card from selection
-    gameState.selectedCards = gameState.selectedCards.filter(i => i !== index);
+  // Get the card value
+  const selectedCard = gameState.hand[index];
+  
+  // Find empty slot
+  let slotToFill = null;
+  let slotIndex = 0;
+  
+  if (!cardSlot1.innerHTML) {
+    slotToFill = cardSlot1;
+    slotIndex = 0;
+  } else if (!cardSlot2.innerHTML) {
+    slotToFill = cardSlot2;
+    slotIndex = 1;
+  }
+
+  if (slotToFill) {
+    // Add to field cards array
+    gameState.fieldCards[slotIndex] = selectedCard;
     
-    // Clear the corresponding slot
-    if (gameState.selectedCards.length === 0) {
-      cardSlot1.innerHTML = '';
-      cardSlot2.innerHTML = '';
-    } else {
-      // If one card remains, make sure it's in the first slot
-      const remainingCard = gameState.hand[gameState.selectedCards[0]];
-      cardSlot1.innerHTML = `<img src="${CARDS[remainingCard].image}" alt="${CARDS[remainingCard].type}">`;
-      cardSlot2.innerHTML = '';
-    }
-  } else if (gameState.selectedCards.length < 2) {
-    // Add card to selection
-    gameState.selectedCards.push(index);
+    // Remove card from hand
+    gameState.hand.splice(index, 1);
     
-    // Show card in the appropriate slot with animation
-    const selectedCard = gameState.hand[index];
+    // Add to field with animation
     const cardImage = `<img src="${CARDS[selectedCard].image}" alt="${CARDS[selectedCard].type}">`;
-    
-    if (gameState.selectedCards.length === 1) {
-      cardSlot1.style.transform = 'scale(0)';
-      setTimeout(() => {
-        cardSlot1.innerHTML = cardImage;
-        cardSlot1.style.transform = 'scale(1)';
-      }, 150);
-    } else {
-      cardSlot2.style.transform = 'scale(0)';
-      setTimeout(() => {
-        cardSlot2.innerHTML = cardImage;
-        cardSlot2.style.transform = 'scale(1)';
-      }, 150);
-    }
+    slotToFill.style.transform = 'scale(0)';
+    setTimeout(() => {
+      slotToFill.innerHTML = cardImage;
+      slotToFill.style.transform = 'scale(1)';
+      slotToFill.classList.add('selected');
+    }, 150);
+
+    // Add click handler to return card
+    slotToFill.onclick = () => {
+      if (gameState.gameLocked) return;
+      
+      // Return card to hand
+      gameState.hand.push(selectedCard);
+      
+      // Remove from field cards
+      gameState.fieldCards[slotIndex] = null;
+      
+      slotToFill.innerHTML = '';
+      slotToFill.onclick = null;
+      slotToFill.classList.remove('selected');
+      
+      // Play sound
+      playSound('reset');
+      
+      renderHand();
+      renderField();
+      updateUI();
+    };
   }
 
   renderHand();
+  renderField();
   updateUI();
 }
 
@@ -232,40 +262,37 @@ document.head.appendChild(style);
 
 // Handle player turn
 async function handlePlayerTurn() {
-  if (gameState.selectedCards.length !== 2 || gameState.gameLocked) return;
+  // Count valid cards on field
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  
+  if (fieldCardCount !== 2 || gameState.gameLocked) {
+    alert('Please place 2 cards on the field first!');
+    return;
+  }
   
   gameState.gameLocked = true;
   
-  // Move selected cards to field
-  gameState.fieldCards = [
-    gameState.hand[gameState.selectedCards[0]],
-    gameState.hand[gameState.selectedCards[1]]
-  ];
-  
-  // Remove cards from hand
-  gameState.selectedCards.sort((a, b) => b - a).forEach(i => {
-    gameState.hand.splice(i, 1);
-  });
-  gameState.selectedCards = [];
+  // Remove null values from field cards
+  gameState.fieldCards = gameState.fieldCards.filter(card => card !== null);
   
   // Bot selects cards
   const botCards = [getRandomCard(), getRandomCard()];
   gameState.botFieldCards = botCards;
   
   playSound('card-down');
-    renderHand();
-    renderField();
+  renderHand();
+  renderField();
   
   // Show bot's cards after a delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   // Prompt for return card selection
   document.getElementById('turn-timer').textContent = 'Return which card?';
-    promptSelectReturnCard();
-  }
-  
+  promptSelectReturnCard();
+}
+
 // Select card to return to hand
-  function promptSelectReturnCard() {
+function promptSelectReturnCard() {
   const card1 = document.getElementById('player-card1');
   const card2 = document.getElementById('player-card2');
   const botCard1 = document.getElementById('opponent-card1');
@@ -317,15 +344,15 @@ async function handlePlayerTurn() {
     // Update UI
     renderHand();
     renderField();
-
+    
     // Clean up
-    card1.onclick = null;
-    card2.onclick = null;
-
+      card1.onclick = null;
+      card2.onclick = null;
+      
     // Resolve battle after a delay
-    setTimeout(() => {
-      resolveBattle();
-    }, 1000);
+      setTimeout(() => {
+        resolveBattle();
+      }, 1000);
   }
 }
 
@@ -393,7 +420,7 @@ function resolveBattle() {
     // Draw new card
     addCardToHand(getRandomCard());
     
-        renderField();
+    renderField();
     updateUI();
   }, 2000);
 }
@@ -476,8 +503,8 @@ function renderField() {
   } else {
     setCardImage('opponent-card1', null);
     setCardImage('opponent-card2', null);
-  }
-}
+      }
+    }
 
 // Update UI elements
 function updateUI() {
@@ -494,14 +521,20 @@ function updateUI() {
       statusText = '<span class="timer-text">Choose a card to return!</span>';
     }
   } else {
-    if (gameState.selectedCards.length === 2) {
+    const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+    if (fieldCardCount === 2) {
       statusText = '<span class="timer-text ready">Ready to end turn!</span>';
     } else {
-      statusText = `<span class="timer-text">Select cards (${gameState.selectedCards.length}/2)</span>`;
+      statusText = `<span class="timer-text">Select cards (${fieldCardCount}/2)</span>`;
     }
   }
   
   document.getElementById('turn-timer').innerHTML = statusText;
+  
+  // Update buttons
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  endTurnBtn.disabled = !(!gameState.gameLocked && fieldCardCount === 2);
+  resetBtn.disabled = fieldCardCount === 0;
 }
 
 // Play sound
@@ -514,7 +547,7 @@ function playSound(name) {
 function setupEventListeners() {
   // End turn button
   endTurnBtn.onclick = () => {
-    if (!gameState.gameLocked && gameState.selectedCards.length === 2) {
+    if (!gameState.gameLocked && gameState.fieldCards.filter(card => card !== null).length === 2) {
       handlePlayerTurn();
     }
   };
@@ -522,9 +555,41 @@ function setupEventListeners() {
   // Reset button
   resetBtn.onclick = () => {
     if (!gameState.gameLocked) {
-      gameState.selectedCards = [];
-    renderHand();
+      // Return field cards to hand
+      gameState.fieldCards.forEach(card => {
+        if (card) {
+          gameState.hand.push(card);
+        }
+      });
+      
+      // Clear card slots
+      const cardSlot1 = document.getElementById('player-card1');
+      const cardSlot2 = document.getElementById('player-card2');
+      if (cardSlot1) {
+        cardSlot1.innerHTML = '';
+        cardSlot1.onclick = null;
+        cardSlot1.classList.remove('selected');
+      }
+      if (cardSlot2) {
+        cardSlot2.innerHTML = '';
+        cardSlot2.onclick = null;
+        cardSlot2.classList.remove('selected');
+      }
+      
+      // Clear field cards array
+      gameState.fieldCards = [];
+      
+      // Re-render and update UI
+      renderHand();
+      renderField();
       updateUI();
+      
+      // Play reset sound if available
+      try {
+        playSound('reset');
+      } catch (error) {
+        console.log('Reset sound not available');
+      }
     }
   };
   

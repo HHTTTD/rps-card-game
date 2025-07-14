@@ -6,13 +6,12 @@ const gameState = {
   health: 5,
   opponentHealth: 5,
   hand: [],
-  selectedCards: [], // Cards selected from hand
   fieldCards: [], // Cards on field
   opponentFieldCards: [],
-  battleCard: null, // Card chosen for battle
+  battleCard: null,
   opponentBattleCard: null,
   gameLocked: false,
-  bothPlayersReady: false // New flag to track if both players have ended turn
+  bothPlayersReady: false
 };
 
 // Animation durations
@@ -167,7 +166,6 @@ window.startPvpGame = function({ roomId, playerIndex, socket }) {
   gameState.health = 5;
   gameState.opponentHealth = 5;
   gameState.hand = [];
-  gameState.selectedCards = [];
   gameState.fieldCards = [];
   gameState.opponentFieldCards = [];
   gameState.battleCard = null;
@@ -231,6 +229,8 @@ function renderHand() {
   
   handContainer.innerHTML = '';
   
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  
   gameState.hand.forEach((card, index) => {
     const div = document.createElement('div');
     div.classList.add('card');
@@ -242,10 +242,13 @@ function renderHand() {
       console.error('Failed to load card image:', CARDS[card].image);
       img.src = 'assets/images/cards/back.png';
     };
-      div.appendChild(img);
+    div.appendChild(img);
     
-    if (!gameState.gameLocked) {
-      div.addEventListener('click', () => {
+    // Only allow clicking cards if not locked and field isn't full
+    if (!gameState.gameLocked && fieldCardCount < 2) {
+      div.style.cursor = 'pointer';
+      div.style.opacity = '1';
+      div.onclick = () => {
         console.log('Card clicked:', index);
         try {
           playSound('click');
@@ -253,11 +256,11 @@ function renderHand() {
           console.error('Failed to play sound:', error);
         }
         selectCard(index);
-      });
-    }
-    
-    if (gameState.selectedCards.includes(index)) {
-      div.classList.add('selected');
+      };
+    } else {
+      div.style.cursor = 'not-allowed';
+      div.style.opacity = '0.7';
+      div.onclick = null; // Remove click handler completely
     }
     
     handContainer.appendChild(div);
@@ -272,80 +275,148 @@ function renderHand() {
 // Select card from hand
 function selectCard(index) {
   if (gameState.gameLocked) return;
+  
+  // Count valid cards on field
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  
+  // Don't allow selecting if field is full
+  if (fieldCardCount >= 2) {
+    return;
+  }
 
   const cardSlot1 = document.getElementById('player-card1');
   const cardSlot2 = document.getElementById('player-card2');
   
-  if (gameState.selectedCards.includes(index)) {
-    // Remove card from selection
-    gameState.selectedCards = gameState.selectedCards.filter(i => i !== index);
+  // Get the card value
+  const selectedCard = gameState.hand[index];
+  
+  // Check if this card is already on the field
+  const fieldIndex = gameState.fieldCards.indexOf(selectedCard);
+  if (fieldIndex !== -1) {
+    // Return card from field to hand
+    gameState.fieldCards.splice(fieldIndex, 1);
+    const slotToEmpty = fieldIndex === 0 ? cardSlot1 : cardSlot2;
+    slotToEmpty.innerHTML = '';
+    slotToEmpty.onclick = null;
+    slotToEmpty.classList.remove('selected');
     
-    // Clear the corresponding slot
-    if (gameState.selectedCards.length === 0) {
-      cardSlot1.innerHTML = '';
-      cardSlot2.innerHTML = '';
-    } else {
-      // If one card remains, make sure it's in the first slot
-      const remainingCard = gameState.hand[gameState.selectedCards[0]];
-      cardSlot1.innerHTML = `<img src="${CARDS[remainingCard].image}" alt="${CARDS[remainingCard].type}">`;
-      cardSlot2.innerHTML = '';
-    }
-  } else if (gameState.selectedCards.length < 2) {
-    // Add card to selection
-    gameState.selectedCards.push(index);
+    // Return card to hand
+    gameState.hand.push(selectedCard);
     
-    // Show card in the appropriate slot with animation
-    const selectedCard = gameState.hand[index];
+    renderHand();
+    renderField();
+    updateUI();
+    return;
+  }
+  
+  // Find empty slot
+  let slotToFill = null;
+  let slotIndex = 0;
+  
+  if (!cardSlot1.innerHTML) {
+    slotToFill = cardSlot1;
+    slotIndex = 0;
+  } else if (!cardSlot2.innerHTML) {
+    slotToFill = cardSlot2;
+    slotIndex = 1;
+  }
+
+  if (slotToFill) {
+    // Add to field cards array
+    gameState.fieldCards[slotIndex] = selectedCard;
+    
+    // Remove card from hand
+    gameState.hand.splice(index, 1);
+    
+    // Add to field with animation
     const cardImage = `<img src="${CARDS[selectedCard].image}" alt="${CARDS[selectedCard].type}">`;
-    
-    if (gameState.selectedCards.length === 1) {
-      cardSlot1.style.transform = 'scale(0)';
-      setTimeout(() => {
-        cardSlot1.innerHTML = cardImage;
-        cardSlot1.style.transform = 'scale(1)';
-      }, 150);
-    } else {
-      cardSlot2.style.transform = 'scale(0)';
-      setTimeout(() => {
-        cardSlot2.innerHTML = cardImage;
-        cardSlot2.style.transform = 'scale(1)';
-      }, 150);
-    }
+    slotToFill.style.transform = 'scale(0)';
+    setTimeout(() => {
+      slotToFill.innerHTML = cardImage;
+      slotToFill.style.transform = 'scale(1)';
+      slotToFill.classList.add('selected');
+    }, 150);
+
+    // Add click handler to return card
+    slotToFill.onclick = () => {
+      if (gameState.gameLocked) return;
+      
+      // Return card to hand
+      gameState.hand.push(selectedCard);
+      
+      // Remove from field cards
+      gameState.fieldCards[slotIndex] = null;
+      
+      // Clear field slot
+      slotToFill.innerHTML = '';
+      slotToFill.onclick = null;
+      slotToFill.classList.remove('selected');
+      
+      // Play sound
+      playSound('reset');
+      
+      renderHand();
+      renderField();
+      updateUI();
+    };
   }
 
   renderHand();
+  renderField();
   updateUI();
 }
 
 // Render battlefield
 function renderField() {
-  // Always show card backs until both players are ready
-  const showCardBack = !gameState.bothPlayersReady;
+  // Only show card backs when game is locked (after end turn)
+  const showCardBack = gameState.gameLocked && !gameState.bothPlayersReady;
   
   // Player's field cards
   if (gameState.fieldCards.length > 0) {
+    // First card
     if (showCardBack) {
       setCardImage('player-card1', 'back');
-      setCardImage('player-card2', 'back');
     } else {
       setCardImage('player-card1', gameState.fieldCards[0]);
-      setCardImage('player-card2', gameState.fieldCards[1]);
+    }
+    
+    // Second card (if exists)
+    if (gameState.fieldCards.length > 1) {
+      if (showCardBack) {
+        setCardImage('player-card2', 'back');
+      } else {
+        setCardImage('player-card2', gameState.fieldCards[1]);
+      }
+    } else {
+      setCardImage('player-card2', null);
     }
   } else {
+    // No cards on field
     setCardImage('player-card1', null);
     setCardImage('player-card2', null);
   }
-  
+
   // Opponent's field cards
   if (gameState.opponentFieldCards.length > 0) {
+    // First card
     if (showCardBack) {
       setCardImage('opponent-card1', 'back');
-      setCardImage('opponent-card2', 'back');
     } else {
       setCardImage('opponent-card1', gameState.opponentFieldCards[0]);
-      setCardImage('opponent-card2', gameState.opponentFieldCards[1]);
+    }
+    
+    // Second card (if exists)
+    if (gameState.opponentFieldCards.length > 1) {
+      if (showCardBack) {
+        setCardImage('opponent-card2', 'back');
+      } else {
+        setCardImage('opponent-card2', gameState.opponentFieldCards[1]);
+      }
+    } else {
+      setCardImage('opponent-card2', null);
     }
   } else {
+    // No opponent cards on field
     setCardImage('opponent-card1', null);
     setCardImage('opponent-card2', null);
   }
@@ -372,29 +443,19 @@ function setCardImage(slotId, card) {
 
 // Handle player turn
 function handlePlayerTurn() {
-  if (gameState.selectedCards.length !== 2 || gameState.gameLocked) {
-    alert('Please select 2 cards first!');
-    return;
-  }
+  // Count valid cards on field
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
   
-  if (gameState.gameLocked) {
+  if (fieldCardCount !== 2 || gameState.gameLocked) {
+    alert('Please place 2 cards on the field first!');
     return;
   }
   
   // Lock the game
   gameState.gameLocked = true;
   
-  // Move selected cards to field
-  gameState.fieldCards = [
-    gameState.hand[gameState.selectedCards[0]], 
-    gameState.hand[gameState.selectedCards[1]]
-  ];
-  
-  // Remove cards from hand
-  gameState.selectedCards.sort((a, b) => b - a).forEach(i => {
-    gameState.hand.splice(i, 1);
-  });
-  gameState.selectedCards = [];
+  // Remove null values from field cards
+  gameState.fieldCards = gameState.fieldCards.filter(card => card !== null);
   
   // Send field cards to server with error handling
   if (!safeEmit('submitFieldCards', {
@@ -414,9 +475,12 @@ function handlePlayerTurn() {
 }
 
 // Select card to return to hand
-  function promptSelectReturnCard() {
+function promptSelectReturnCard() {
   const card1 = document.getElementById('player-card1');
   const card2 = document.getElementById('player-card2');
+  
+  // Make sure we have both cards
+  if (!card1 || !card2) return;
   
   // Now show the actual cards for selection
   setCardImage('player-card1', gameState.fieldCards[0]);
@@ -426,10 +490,21 @@ function handlePlayerTurn() {
   setCardImage('opponent-card1', gameState.opponentFieldCards[0]);
   setCardImage('opponent-card2', gameState.opponentFieldCards[1]);
   
+  // Add selection styling
   card1.classList.add('selectable');
   card2.classList.add('selectable');
-
-    function selectReturn(index) {
+  card1.classList.add('hoverable');
+  card2.classList.add('hoverable');
+  
+  // Clear any existing click handlers
+  card1.onclick = null;
+  card2.onclick = null;
+  
+  function selectReturn(index) {
+    // Remove selection styling
+    card1.classList.remove('selectable', 'hoverable');
+    card2.classList.remove('selectable', 'hoverable');
+    
     const keepIndex = index;
     const playCard = gameState.fieldCards[keepIndex === 0 ? 1 : 0];
     const returnCard = gameState.fieldCards[keepIndex];
@@ -441,7 +516,8 @@ function handlePlayerTurn() {
     gameState.battleCard = playCard;
     gameState.fieldCards = [playCard];
     
-    // Send battle card to server
+    // Lock game and send battle card to server
+    gameState.gameLocked = true;
     gameState.socket.emit('submitBattleCard', {
       roomId: gameState.roomId,
       player: gameState.playerIndex,
@@ -449,24 +525,24 @@ function handlePlayerTurn() {
       card: playCard
     });
     
+    // Update UI
     renderHand();
     renderField();
     updateUI();
     playSound('rps-battle');
     
     // Clean up
-    card1.classList.remove('selectable');
-    card2.classList.remove('selectable');
-      card1.onclick = null;
-      card2.onclick = null;
+    card1.onclick = null;
+    card2.onclick = null;
     
     // Update status
     document.getElementById('turn-timer').textContent = 'Waiting for opponent...';
-    }
-
-    card1.onclick = () => selectReturn(0);
-    card2.onclick = () => selectReturn(1);
   }
+  
+  // Add new click handlers
+  card1.onclick = () => selectReturn(0);
+  card2.onclick = () => selectReturn(1);
+}
 
 // Play sound
 function playSound(name) {
@@ -519,27 +595,28 @@ function updateUI() {
       statusText = '<span class="timer-text">Cards placed! Waiting for opponent...</span>';
     }
   } else {
-    if (gameState.selectedCards.length === 2) {
+    const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+    if (fieldCardCount === 2) {
       statusText = '<span class="timer-text ready">Ready to end turn!</span>';
     } else {
-      statusText = `<span class="timer-text">Select cards (${gameState.selectedCards.length}/2)</span>`;
+      statusText = `<span class="timer-text">Select cards (${fieldCardCount}/2)</span>`;
     }
   }
   
   document.getElementById('turn-timer').innerHTML = statusText;
   
   // Update buttons
-  const canEndTurn = !gameState.gameLocked && gameState.selectedCards.length === 2;
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  const canEndTurn = !gameState.gameLocked && fieldCardCount === 2;
   endTurnBtn.disabled = !canEndTurn;
-  endTurnBtn.style.opacity = canEndTurn ? '1' : '0.5';
   
-  resetBtn.disabled = gameState.selectedCards.length === 0;
-  resetBtn.style.opacity = gameState.selectedCards.length > 0 ? '1' : '0.5';
+  // Only enable reset when there are cards on field
+  resetBtn.disabled = fieldCardCount === 0;
   
   // Update card interaction states
   const cards = document.querySelectorAll('.card');
   cards.forEach(card => {
-    const isInteractable = !gameState.gameLocked && gameState.selectedCards.length < 2;
+    const isInteractable = !gameState.gameLocked && fieldCardCount < 2;
     card.style.cursor = isInteractable ? 'pointer' : 'not-allowed';
     card.style.opacity = isInteractable ? '1' : '0.7';
   });
@@ -563,19 +640,51 @@ function setupEventListeners() {
       showConnectionError('Not connected to server');
       return;
     }
-  if (!gameState.gameLocked && gameState.selectedCards.length === 2) {
-    handlePlayerTurn();
-  }
+    if (!gameState.gameLocked && gameState.fieldCards.length === 2) {
+      handlePlayerTurn();
+    }
   };
 
   // Reset button
   const resetButton = document.getElementById('reset-selection');
   resetButton.onclick = () => {
-  if (!gameState.gameLocked) {
-    gameState.selectedCards = [];
+    if (!gameState.gameLocked) {
+      // Return field cards to hand
+      gameState.fieldCards.forEach(card => {
+        if (card) {
+          gameState.hand.push(card);
+        }
+      });
+      
+      // Clear card slots
+      const cardSlot1 = document.getElementById('player-card1');
+      const cardSlot2 = document.getElementById('player-card2');
+      if (cardSlot1) {
+        cardSlot1.innerHTML = '';
+        cardSlot1.onclick = null;
+        cardSlot1.classList.remove('selected');
+      }
+      if (cardSlot2) {
+        cardSlot2.innerHTML = '';
+        cardSlot2.onclick = null;
+        cardSlot2.classList.remove('selected');
+      }
+      
+      // Clear field cards array
+      gameState.fieldCards = [];
+      
+      // Re-render and update UI
       renderHand();
-    updateUI();
-  }
+      renderField();
+      updateUI();
+      
+      // Play reset sound if available
+      try {
+        playSound('reset');
+      } catch (error) {
+        console.log('Reset sound not available');
+      }
+    }
   };
 
   // Surrender button
@@ -585,19 +694,20 @@ function setupEventListeners() {
       showConnectionError('Not connected to server');
       return;
     }
-  if (confirm('Are you sure you want to surrender?')) {
-    safeEmit('surrender', {
-      roomId: gameState.roomId,
-      player: gameState.playerIndex
-    });
-  }
+    if (confirm('Are you sure you want to surrender?')) {
+      safeEmit('surrender', {
+        roomId: gameState.roomId,
+        player: gameState.playerIndex
+      });
+    }
   };
 
   // Socket events
-  gameState.socket.on('opponentFieldCards', ({ player }) => {
+  gameState.socket.on('opponentFieldCards', ({ player, cards }) => {
     if (player !== gameState.playerIndex) {
-      gameState.opponentFieldCards = ['unknown', 'unknown']; // Just mark that opponent has placed cards
+      gameState.opponentFieldCards = ['back', 'back']; // Mark that opponent has placed cards, but show them as face down
       renderField();
+      updateUI();
     }
   });
 
@@ -606,9 +716,10 @@ function setupEventListeners() {
     // Update both players' field cards with actual values
     gameState.fieldCards = fieldCards[gameState.playerIndex];
     gameState.opponentFieldCards = fieldCards[gameState.playerIndex === 1 ? 2 : 1];
-  
+
     // Set ready flag to reveal cards
     gameState.bothPlayersReady = true;
+    gameState.gameLocked = false; // Unlock game to allow card selection
     
     // Show the actual cards
     renderField();
@@ -749,8 +860,8 @@ async function addCardToHand(card) {
   await new Promise(resolve => setTimeout(resolve, 300));
   
   // Render hand normally after animation
-    renderHand();
-  }
+  renderHand();
+}
 
 // Enhanced reconnection logic
 function attemptReconnect() {
