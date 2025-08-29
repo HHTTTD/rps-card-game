@@ -8,7 +8,11 @@ const gameState = {
   battleCard: null,
   botBattleCard: null,
   gameLocked: false,
-  deck: shuffle([...Array(6).fill('ROCK'), ...Array(6).fill('PAPER'), ...Array(6).fill('SCISSORS')])
+  deck: shuffle([...Array(6).fill('ROCK'), ...Array(6).fill('PAPER'), ...Array(6).fill('SCISSORS')]),
+  // Timer system
+  timer: null,
+  countdown: 30,
+  isReturnPhase: false
 };
 
 // Card definitions
@@ -32,11 +36,14 @@ function initGame() {
   gameState.health = 5;
   gameState.botHealth = 5;
   gameState.hand = [];
-  gameState.fieldCards = [];
+  gameState.fieldCards = [null, null]; // Initialize with null values for 2 slots
   gameState.botFieldCards = [];
   gameState.battleCard = null;
   gameState.botBattleCard = null;
   gameState.gameLocked = false;
+  gameState.timer = null;
+  gameState.countdown = 20;
+  gameState.isReturnPhase = false;
   
   setupEventListeners();
   dealInitialCards();
@@ -50,6 +57,161 @@ function shuffle(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+// Timer functions
+function startTimer(seconds, onExpire) {
+  gameState.countdown = seconds;
+  gameState.isReturnPhase = seconds === 10;
+  updateTimerDisplay();
+  clearInterval(gameState.timer);
+  
+  gameState.timer = setInterval(() => {
+    gameState.countdown--;
+    updateTimerDisplay();
+    
+    if (gameState.countdown <= 0) {
+      clearInterval(gameState.timer);
+      onExpire();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(gameState.timer);
+  gameState.timer = null;
+}
+
+function updateTimerDisplay() {
+  const timerElement = document.getElementById('turn-timer');
+  if (!timerElement) return;
+  
+  const minutes = Math.floor(gameState.countdown / 60);
+  const seconds = gameState.countdown % 60;
+  const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+  let statusText = '';
+  if (gameState.isReturnPhase) {
+    statusText = `<span class="timer-text urgent">Return card: ${timeString}</span>`;
+  } else {
+    statusText = `<span class="timer-text">Select cards: ${timeString}</span>`;
+  }
+  
+  timerElement.innerHTML = statusText;
+  
+  // Add visual warning when time is running out
+  if (gameState.countdown <= 5) {
+    timerElement.classList.add('urgent');
+  } else {
+    timerElement.classList.remove('urgent');
+  }
+}
+
+// Auto-select functions
+function autoSelectFieldCards() {
+  console.log('Auto-selecting field cards due to timeout');
+  console.log('Initial state:', {
+    hand: [...gameState.hand],
+    fieldCards: [...gameState.fieldCards],
+    handLength: gameState.hand.length
+  });
+  
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  const neededCards = 2 - fieldCardCount;
+  
+  console.log('Cards needed:', neededCards);
+  
+  if (neededCards > 0 && gameState.hand.length > 0) {
+    // Randomly select cards from hand (allow duplicates)
+    for (let i = 0; i < neededCards && gameState.hand.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * gameState.hand.length);
+      const selectedCard = gameState.hand[randomIndex];
+      
+      console.log(`Selection ${i + 1}:`, {
+        randomIndex: randomIndex,
+        selectedCard: selectedCard,
+        handBeforeSplice: [...gameState.hand]
+      });
+      
+      // Find empty slot
+      let slotIndex = 0;
+      if (gameState.fieldCards[0] !== null) {
+        slotIndex = 1;
+      }
+      
+      // Add to field (allow duplicates)
+      gameState.fieldCards[slotIndex] = selectedCard;
+      gameState.hand.splice(randomIndex, 1);
+      
+      console.log(`After selection ${i + 1}:`, {
+        fieldCards: [...gameState.fieldCards],
+        handAfterSplice: [...gameState.hand],
+        handLength: gameState.hand.length
+      });
+    }
+    
+    renderHand();
+    renderField();
+    updateUI();
+  }
+  
+  console.log('Final state:', {
+    fieldCards: [...gameState.fieldCards],
+    hand: [...gameState.hand],
+    fieldCardCount: gameState.fieldCards.filter(card => card !== null).length
+  });
+  
+  // Auto-end turn
+  if (gameState.fieldCards.filter(card => card !== null).length === 2) {
+    handlePlayerTurn();
+  }
+}
+
+function autoSelectReturnCard() {
+  console.log('Auto-selecting return card due to timeout');
+  
+  if (gameState.fieldCards.length >= 2) {
+    // Randomly choose which card to return
+    const returnIndex = Math.floor(Math.random() * 2);
+    const keepIndex = returnIndex === 0 ? 1 : 0;
+    
+    const returnCard = gameState.fieldCards[returnIndex];
+    const playCard = gameState.fieldCards[keepIndex];
+    
+    // Return one card to hand
+    gameState.hand.push(returnCard);
+    
+    // Set battle card
+    gameState.battleCard = playCard;
+    gameState.fieldCards = [playCard];
+    
+    // Bot randomly selects a card to keep (same logic as manual selection)
+    const botKeepIndex = Math.floor(Math.random() * 2);
+    gameState.botBattleCard = gameState.botFieldCards[botKeepIndex];
+    gameState.botFieldCards = [gameState.botBattleCard];
+    
+    // Debug logging
+    console.log('Auto select return card:', {
+      returnIndex: returnIndex,
+      keepIndex: keepIndex,
+      returnCard: returnCard,
+      playCard: playCard,
+      botKeepIndex: botKeepIndex,
+      botBattleCard: gameState.botBattleCard,
+      botFieldCards: gameState.botFieldCards
+    });
+    
+    // Update UI
+    renderHand();
+    renderField();
+    updateUI();
+    playSound('rps-battle');
+    
+    // Resolve battle after a delay
+    setTimeout(() => {
+      resolveBattle();
+    }, 1000);
+  }
 }
 
 // Deal initial cards
@@ -82,6 +244,8 @@ async function dealInitialCards() {
   // After all cards are dealt, render them normally
   setTimeout(() => {
     renderHand();
+    // Start timer for card selection
+    startTimer(20, autoSelectFieldCards);
   }, 300);
 }
 
@@ -180,10 +344,10 @@ function selectCard(index) {
   let slotToFill = null;
   let slotIndex = 0;
   
-  if (!cardSlot1.innerHTML) {
+  if (gameState.fieldCards[0] === null) {
     slotToFill = cardSlot1;
     slotIndex = 0;
-  } else if (!cardSlot2.innerHTML) {
+  } else if (gameState.fieldCards[1] === null) {
     slotToFill = cardSlot2;
     slotIndex = 1;
   }
@@ -270,14 +434,32 @@ async function handlePlayerTurn() {
     return;
   }
   
+  // Stop timer since player ended turn
+  stopTimer();
+  
   gameState.gameLocked = true;
   
   // Remove null values from field cards
   gameState.fieldCards = gameState.fieldCards.filter(card => card !== null);
   
   // Bot selects cards
-  const botCards = [getRandomCard(), getRandomCard()];
-  gameState.botFieldCards = botCards;
+  const botCard1 = getRandomCard();
+  const botCard2 = getRandomCard();
+  
+  // Ensure bot cards are valid
+  if (!botCard1 || !botCard2) {
+    console.error('Bot cards are invalid:', { botCard1, botCard2 });
+    // Fallback to random cards
+    const fallbackCards = ['ROCK', 'PAPER', 'SCISSORS'];
+    gameState.botFieldCards = [
+      fallbackCards[Math.floor(Math.random() * 3)],
+      fallbackCards[Math.floor(Math.random() * 3)]
+    ];
+  } else {
+    gameState.botFieldCards = [botCard1, botCard2];
+  }
+  
+  console.log('Bot selected field cards:', gameState.botFieldCards);
   
   playSound('card-down');
   renderHand();
@@ -286,9 +468,11 @@ async function handlePlayerTurn() {
   // Show bot's cards after a delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Prompt for return card selection
+  // Prompt for return card selection and start timer
   document.getElementById('turn-timer').textContent = 'Return which card?';
   promptSelectReturnCard();
+  // Start 10-second timer for return card selection
+  startTimer(10, autoSelectReturnCard);
 }
 
 // Select card to return to hand
@@ -321,6 +505,9 @@ function promptSelectReturnCard() {
   card2.onclick = () => selectReturn(1);
 
   function selectReturn(index) {
+    // Stop timer since player made a choice
+    stopTimer();
+    
     // Remove hover and selectable effects
     card1.classList.remove('selectable', 'hoverable');
     card2.classList.remove('selectable', 'hoverable');
@@ -340,6 +527,16 @@ function promptSelectReturnCard() {
     const botKeepIndex = Math.floor(Math.random() * 2);
     gameState.botBattleCard = gameState.botFieldCards[botKeepIndex];
     gameState.botFieldCards = [gameState.botBattleCard];
+    
+    // Debug logging
+    console.log('Manual select return card:', {
+      keepIndex: keepIndex,
+      returnCard: returnCard,
+      playCard: playCard,
+      botKeepIndex: botKeepIndex,
+      botBattleCard: gameState.botBattleCard,
+      botFieldCards: gameState.botFieldCards
+    });
 
     // Update UI
     renderHand();
@@ -360,6 +557,29 @@ function promptSelectReturnCard() {
 function resolveBattle() {
   const playerCard = gameState.battleCard;
   const botCard = gameState.botBattleCard;
+  
+  // Debug logging
+  console.log('Resolving battle:', {
+    playerCard: playerCard,
+    botCard: botCard,
+    battleCard: gameState.battleCard,
+    botBattleCard: gameState.botBattleCard
+  });
+  
+  // Ensure cards are valid
+  if (!playerCard || !botCard) {
+    console.error('Invalid cards in battle:', { playerCard, botCard });
+    // Use fallback cards
+    const fallbackPlayerCard = playerCard || 'ROCK';
+    const fallbackBotCard = botCard || 'PAPER';
+    
+    const resultText = 'ERROR!';
+    const resultType = 'draw';
+    const details = `Card error - using fallback cards`;
+    
+    showBattleAnnouncement(resultText, resultType, details, fallbackPlayerCard, fallbackBotCard);
+    return;
+  }
   
   let winner = 'draw';
   if (
@@ -388,7 +608,7 @@ function resolveBattle() {
                     'draw';
   const details = `Your ${playerCard} vs Bot's ${botCard}`;
   
-  showBattleAnnouncement(resultText, resultType, details);
+  showBattleAnnouncement(resultText, resultType, details, playerCard, botCard);
   
   // Check for game over
   if (gameState.health <= 0 || gameState.botHealth <= 0) {
@@ -411,22 +631,28 @@ function resolveBattle() {
   
   // Start next round
   setTimeout(() => {
-    gameState.fieldCards = [];
+    gameState.fieldCards = [null, null]; // Reset to null values for 2 slots
     gameState.botFieldCards = [];
     gameState.battleCard = null;
     gameState.botBattleCard = null;
     gameState.gameLocked = false;
+    
+    // Stop any existing timer
+    stopTimer();
     
     // Draw new card
     addCardToHand(getRandomCard());
     
     renderField();
     updateUI();
+    
+    // Start new timer for next round
+    startTimer(20, autoSelectFieldCards);
   }, 2000);
 }
 
 // Show battle announcement
-function showBattleAnnouncement(resultText, resultType, details = '') {
+function showBattleAnnouncement(resultText, resultType, details = '', myCard = null, opponentCard = null) {
   const announcement = document.createElement('div');
   announcement.className = `battle-announcement announcement-${resultType}`;
   
@@ -434,9 +660,30 @@ function showBattleAnnouncement(resultText, resultType, details = '') {
                      resultType === 'lose' ? 'lose-text' : 
                      'draw-text';
   
+  // Create card display HTML if cards are provided
+  let cardDisplayHTML = '';
+  if (myCard && opponentCard && CARDS[myCard] && CARDS[opponentCard]) {
+    cardDisplayHTML = `
+      <div class="battle-cards-display">
+        <div class="battle-card player-card">
+          <img src="${CARDS[myCard].image}" alt="${myCard}" />
+          <span>Your ${myCard}</span>
+        </div>
+        <div class="vs-battle">VS</div>
+        <div class="battle-card opponent-card">
+          <img src="${CARDS[opponentCard].image}" alt="${opponentCard}" />
+          <span>Bot's ${opponentCard}</span>
+        </div>
+      </div>
+    `;
+  } else {
+    console.error('Cannot display cards:', { myCard, opponentCard, myCardExists: CARDS[myCard], opponentCardExists: CARDS[opponentCard] });
+  }
+  
   announcement.innerHTML = `
     <h2 class="${resultClass}">${resultText}</h2>
     <div class="result-details">${details}</div>
+    ${cardDisplayHTML}
   `;
   
   document.body.appendChild(announcement);
@@ -450,7 +697,7 @@ function showBattleAnnouncement(resultText, resultType, details = '') {
   setTimeout(() => {
     announcement.style.animation = 'announceOut 0.5s ease-in forwards';
     setTimeout(() => announcement.remove(), 500);
-  }, 2000);
+  }, 3000); // Increased time to show cards longer
 }
 
 // Update setCardImage function

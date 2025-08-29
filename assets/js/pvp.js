@@ -11,7 +11,11 @@ const gameState = {
   battleCard: null,
   opponentBattleCard: null,
   gameLocked: false,
-  bothPlayersReady: false
+  bothPlayersReady: false,
+  // Timer system
+  timer: null,
+  countdown: 30,
+  isReturnPhase: false
 };
 
 // Animation durations
@@ -48,12 +52,158 @@ const connectionState = {
 };
 
 // Shuffle array function
-  function shuffle(array) {
+function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+// Timer functions
+function startTimer(seconds, onExpire) {
+  gameState.countdown = seconds;
+  gameState.isReturnPhase = seconds === 10;
+  updateTimerDisplay();
+  clearInterval(gameState.timer);
+  
+  gameState.timer = setInterval(() => {
+    gameState.countdown--;
+    updateTimerDisplay();
+    
+    if (gameState.countdown <= 0) {
+      clearInterval(gameState.timer);
+      onExpire();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(gameState.timer);
+  gameState.timer = null;
+}
+
+function updateTimerDisplay() {
+  const timerElement = document.getElementById('turn-timer');
+  if (!timerElement) return;
+  
+  const minutes = Math.floor(gameState.countdown / 60);
+  const seconds = gameState.countdown % 60;
+  const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+  let statusText = '';
+  if (gameState.isReturnPhase) {
+    statusText = `<span class="timer-text urgent">Return card: ${timeString}</span>`;
+  } else {
+    statusText = `<span class="timer-text">Select cards: ${timeString}</span>`;
+  }
+  
+  timerElement.innerHTML = statusText;
+  
+  // Add visual warning when time is running out
+  if (gameState.countdown <= 5) {
+    timerElement.classList.add('urgent');
+  } else {
+    timerElement.classList.remove('urgent');
+  }
+}
+
+// Auto-select functions
+function autoSelectFieldCards() {
+  console.log('Auto-selecting field cards due to timeout');
+  console.log('Initial state:', {
+    hand: [...gameState.hand],
+    fieldCards: [...gameState.fieldCards],
+    handLength: gameState.hand.length
+  });
+  
+  const fieldCardCount = gameState.fieldCards.filter(card => card !== null).length;
+  const neededCards = 2 - fieldCardCount;
+  
+  console.log('Cards needed:', neededCards);
+  
+  if (neededCards > 0 && gameState.hand.length > 0) {
+    // Randomly select cards from hand (allow duplicates)
+    for (let i = 0; i < neededCards && gameState.hand.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * gameState.hand.length);
+      const selectedCard = gameState.hand[randomIndex];
+      
+      console.log(`Selection ${i + 1}:`, {
+        randomIndex: randomIndex,
+        selectedCard: selectedCard,
+        handBeforeSplice: [...gameState.hand]
+      });
+      
+      // Find empty slot
+      let slotIndex = 0;
+      if (gameState.fieldCards[0] !== null) {
+        slotIndex = 1;
+      }
+      
+      // Add to field (allow duplicates)
+      gameState.fieldCards[slotIndex] = selectedCard;
+      gameState.hand.splice(randomIndex, 1);
+      
+      console.log(`After selection ${i + 1}:`, {
+        fieldCards: [...gameState.fieldCards],
+        handAfterSplice: [...gameState.hand],
+        handLength: gameState.hand.length
+      });
+    }
+    
+    renderHand();
+    renderField();
+    updateUI();
+  }
+  
+  console.log('Final state:', {
+    fieldCards: [...gameState.fieldCards],
+    hand: [...gameState.hand],
+    fieldCardCount: gameState.fieldCards.filter(card => card !== null).length
+  });
+  
+  // Auto-end turn
+  if (gameState.fieldCards.filter(card => card !== null).length === 2) {
+    handlePlayerTurn();
+  }
+}
+
+function autoSelectReturnCard() {
+  console.log('Auto-selecting return card due to timeout');
+  
+  if (gameState.fieldCards.length >= 2) {
+    // Randomly choose which card to return
+    const returnIndex = Math.floor(Math.random() * 2);
+    const keepIndex = returnIndex === 0 ? 1 : 0;
+    
+    const returnCard = gameState.fieldCards[returnIndex];
+    const playCard = gameState.fieldCards[keepIndex];
+    
+    // Return one card to hand
+    gameState.hand.push(returnCard);
+    
+    // Set battle card
+    gameState.battleCard = playCard;
+    gameState.fieldCards = [playCard];
+    
+    // Lock game and send battle card to server
+    gameState.gameLocked = true;
+    gameState.socket.emit('submitBattleCard', {
+      roomId: gameState.roomId,
+      player: gameState.playerIndex,
+      cardIndex: keepIndex,
+      card: playCard
+    });
+    
+    // Update UI
+    renderHand();
+    renderField();
+    updateUI();
+    playSound('rps-battle');
+    
+    // Update status
+    document.getElementById('turn-timer').textContent = 'Waiting for opponent...';
+  }
 }
 
 // Get random card from deck
@@ -166,12 +316,15 @@ window.startPvpGame = function({ roomId, playerIndex, socket }) {
   gameState.health = 5;
   gameState.opponentHealth = 5;
   gameState.hand = [];
-  gameState.fieldCards = [];
+  gameState.fieldCards = [null, null]; // Initialize with null values for 2 slots
   gameState.opponentFieldCards = [];
   gameState.battleCard = null;
   gameState.opponentBattleCard = null;
   gameState.gameLocked = false;
   gameState.bothPlayersReady = false;
+  gameState.timer = null;
+  gameState.countdown = 20;
+  gameState.isReturnPhase = false;
       
   // Add card hover effect
   document.documentElement.style.setProperty('--card-hover-transform', 'scale(1.1) translateY(-10px)');
@@ -215,6 +368,8 @@ async function dealInitialCards() {
     // After all cards are dealt, render them normally
     setTimeout(() => {
       renderHand();
+      // Start timer for card selection
+      startTimer(20, autoSelectFieldCards);
     }, 300);
 }
 
@@ -290,33 +445,17 @@ function selectCard(index) {
   // Get the card value
   const selectedCard = gameState.hand[index];
   
-  // Check if this card is already on the field
-  const fieldIndex = gameState.fieldCards.indexOf(selectedCard);
-  if (fieldIndex !== -1) {
-    // Return card from field to hand
-    gameState.fieldCards.splice(fieldIndex, 1);
-    const slotToEmpty = fieldIndex === 0 ? cardSlot1 : cardSlot2;
-    slotToEmpty.innerHTML = '';
-    slotToEmpty.onclick = null;
-    slotToEmpty.classList.remove('selected');
-    
-    // Return card to hand
-    gameState.hand.push(selectedCard);
-    
-    renderHand();
-    renderField();
-    updateUI();
-    return;
-  }
+  // Allow placing duplicate cards - only check if slots are available
+  // The duplicate check is removed to allow multiple cards of the same type
   
   // Find empty slot
   let slotToFill = null;
   let slotIndex = 0;
   
-  if (!cardSlot1.innerHTML) {
+  if (gameState.fieldCards[0] === null) {
     slotToFill = cardSlot1;
     slotIndex = 0;
-  } else if (!cardSlot2.innerHTML) {
+  } else if (gameState.fieldCards[1] === null) {
     slotToFill = cardSlot2;
     slotIndex = 1;
   }
@@ -451,6 +590,9 @@ function handlePlayerTurn() {
     return;
   }
   
+  // Stop timer since player ended turn
+  stopTimer();
+  
   // Lock the game
   gameState.gameLocked = true;
   
@@ -501,6 +643,9 @@ function promptSelectReturnCard() {
   card2.onclick = null;
   
   function selectReturn(index) {
+    // Stop timer since player made a choice
+    stopTimer();
+    
     // Remove selection styling
     card1.classList.remove('selectable', 'hoverable');
     card2.classList.remove('selectable', 'hoverable');
@@ -551,7 +696,7 @@ function playSound(name) {
 }
 
 // Show battle announcement
-function showBattleAnnouncement(resultText, resultType, details = '') {
+function showBattleAnnouncement(resultText, resultType, details = '', myCard = null, opponentCard = null) {
   const announcement = document.createElement('div');
   announcement.className = `battle-announcement announcement-${resultType}`;
   
@@ -559,9 +704,30 @@ function showBattleAnnouncement(resultText, resultType, details = '') {
                      resultType === 'lose' ? 'lose-text' : 
                      'draw-text';
   
+  // Create card display HTML if cards are provided
+  let cardDisplayHTML = '';
+  if (myCard && opponentCard && CARDS[myCard.toUpperCase()] && CARDS[opponentCard.toUpperCase()]) {
+    cardDisplayHTML = `
+      <div class="battle-cards-display">
+        <div class="battle-card player-card">
+          <img src="${CARDS[myCard.toUpperCase()].image}" alt="${myCard}" />
+          <span>Your ${myCard.toUpperCase()}</span>
+        </div>
+        <div class="vs-battle">VS</div>
+        <div class="battle-card opponent-card">
+          <img src="${CARDS[opponentCard.toUpperCase()].image}" alt="${opponentCard}" />
+          <span>Opponent's ${opponentCard.toUpperCase()}</span>
+        </div>
+      </div>
+    `;
+  } else {
+    console.error('Cannot display cards:', { myCard, opponentCard, myCardExists: CARDS[myCard?.toUpperCase()], opponentCardExists: CARDS[opponentCard?.toUpperCase()] });
+  }
+  
   announcement.innerHTML = `
     <h2 class="${resultClass}">${resultText}</h2>
     <div class="result-details">${details}</div>
+    ${cardDisplayHTML}
   `;
   
   document.body.appendChild(announcement);
@@ -575,7 +741,7 @@ function showBattleAnnouncement(resultText, resultType, details = '') {
   setTimeout(() => {
     announcement.style.animation = 'announceOut 0.5s ease-in forwards';
     setTimeout(() => announcement.remove(), 500);
-  }, 2000);
+  }, 3000); // Increased time to show cards longer
 }
 
 // Update UI elements
@@ -724,9 +890,11 @@ function setupEventListeners() {
     // Show the actual cards
     renderField();
     
-    // Prompt for return card selection
-    document.getElementById('turn-timer').textContent = 'Return which card?';
-    promptSelectReturnCard();
+      // Prompt for return card selection and start timer
+  document.getElementById('turn-timer').textContent = 'Return which card?';
+  promptSelectReturnCard();
+  // Start 10-second timer for return card selection
+  startTimer(10, autoSelectReturnCard);
   });
 
   gameState.socket.on('battleResult', ({ winner, cards, health }) => {
@@ -753,8 +921,8 @@ function setupEventListeners() {
       resultType = 'lose';
     }
     
-    // Show announcement with battle details
-    showBattleAnnouncement(resultText, resultType, details);
+    // Show announcement with battle details and cards
+    showBattleAnnouncement(resultText, resultType, details, myCard, opponentCard);
     
     // Update UI
     renderField();
@@ -762,19 +930,25 @@ function setupEventListeners() {
   });
 
   gameState.socket.on('roundReset', async () => {
-    gameState.fieldCards = [];
+    gameState.fieldCards = [null, null]; // Reset to null values for 2 slots
     gameState.opponentFieldCards = [];
     gameState.battleCard = null;
     gameState.opponentBattleCard = null;
     gameState.gameLocked = false;
     gameState.bothPlayersReady = false;
     
+    // Stop any existing timer
+    stopTimer();
+    
     // Draw new card with animation
     const newCard = getRandomCard();
     await addCardToHand(newCard);
     
-      renderField();
+    renderField();
     updateUI();
+    
+    // Start new timer for next round
+    startTimer(20, autoSelectFieldCards);
   });
 
   gameState.socket.on('gameOver', ({ winner, reason, finalHealth, finalCards }) => {
