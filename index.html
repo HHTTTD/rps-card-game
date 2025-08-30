@@ -45,6 +45,10 @@
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      display: block;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .start-btn:hover {
@@ -57,6 +61,285 @@
       transform: translateY(0);
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
+
+    .how-to-play-btn {
+      font-size: 1.2rem;
+      padding: 0.8rem 1.5rem;
+      background-color: transparent;
+      color: #2196F3;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+      text-decoration: none;
+      display: block;
+      width: 200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .how-to-play-btn:hover {
+      background-color: #2196F3;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+    }
+
+         /* Modal styles */
+     .modal {
+       display: none;
+       position: fixed;
+       z-index: 1000;
+       left: 0;
+       top: 0;
+       width: 100%;
+       height: 100%;
+       background: rgba(0, 0, 0, 0.7);
+       backdrop-filter: blur(8px);
+       animation: modalFadeIn 0.3s ease-out;
+     }
+
+     @keyframes modalFadeIn {
+       from {
+         opacity: 0;
+       }
+       to {
+         opacity: 1;
+       }
+     }
+
+     .modal-content {
+       background: #1a1a1a;
+       margin: 5% auto;
+       padding: 0;
+       border-radius: 16px;
+       width: 90%;
+       max-width: 600px;
+       max-height: 80vh;
+       overflow: hidden;
+       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+       border: 1px solid #333;
+       animation: modalSlideIn 0.3s ease-out;
+       position: relative;
+     }
+
+     @keyframes modalSlideIn {
+       from {
+         transform: translateY(-20px);
+         opacity: 0;
+       }
+       to {
+         transform: translateY(0);
+         opacity: 1;
+       }
+     }
+
+         .modal-header {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       padding: 1.5rem 2rem;
+       border-bottom: 1px solid #333;
+       background: #1a1a1a;
+     }
+
+     .modal-title {
+       font-size: 1.5rem;
+       color: #fff;
+       margin: 0;
+       font-weight: 600;
+     }
+
+     .close-btn {
+       background: none;
+       border: none;
+       font-size: 1.5rem;
+       color: #888;
+       cursor: pointer;
+       padding: 8px;
+       width: 32px;
+       height: 32px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       transition: all 0.2s ease;
+       border-radius: 6px;
+     }
+
+     .close-btn:hover {
+       color: #fff;
+       background: rgba(255, 255, 255, 0.1);
+     }
+
+         .how-to-play-content {
+       line-height: 1.6;
+       padding: 2rem;
+       max-height: 60vh;
+       overflow-y: auto;
+       scrollbar-width: thin;
+       scrollbar-color: #666 #333;
+     }
+
+     .how-to-play-content::-webkit-scrollbar {
+       width: 6px;
+     }
+
+     .how-to-play-content::-webkit-scrollbar-track {
+       background: #333;
+       border-radius: 3px;
+     }
+
+     .how-to-play-content::-webkit-scrollbar-thumb {
+       background: #666;
+       border-radius: 3px;
+     }
+
+     .how-to-play-content::-webkit-scrollbar-thumb:hover {
+       background: #888;
+     }
+
+     .how-to-play-content h3 {
+       color: #fff;
+       margin-top: 1.5rem;
+       margin-bottom: 0.8rem;
+       font-size: 1.2rem;
+       font-weight: 600;
+     }
+
+     .how-to-play-content ul {
+       margin: 0.8rem 0;
+       padding-left: 1.2rem;
+     }
+
+     .how-to-play-content li {
+       margin: 0.5rem 0;
+       color: #ccc;
+       transition: color 0.2s ease;
+     }
+
+     .how-to-play-content li:hover {
+       color: #37e73b;
+     }
+
+     .how-to-play-content li::marker {
+       color: #666;
+     }
+
+     .game-mode-section {
+       background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(69, 160, 73, 0.05) 100%);
+       padding: 1.5rem;
+       border-radius: 12px;
+       margin: 1.5rem 0;
+       border: 1px solid rgba(76, 175, 80, 0.3);
+       box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+       position: relative;
+       overflow: hidden;
+     }
+
+     .game-mode-section::before {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 4px;
+       height: 100%;
+       background: linear-gradient(180deg, #4CAF50, #45a049);
+     }
+
+     .timer-info {
+       background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.05) 100%);
+       padding: 1.5rem;
+       border-radius: 12px;
+       margin: 1.5rem 0;
+       border: 1px solid rgba(255, 152, 0, 0.3);
+       box-shadow: 0 4px 15px rgba(255, 152, 0, 0.1);
+       position: relative;
+       overflow: hidden;
+     }
+
+     .timer-info::before {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 4px;
+       height: 100%;
+       background: linear-gradient(180deg, #ff9800, #f57c00);
+     }
+
+     .card-info {
+       background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.05) 100%);
+       padding: 1.5rem;
+       border-radius: 12px;
+       margin: 1.5rem 0;
+       border: 1px solid rgba(33, 150, 243, 0.3);
+       box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);
+       position: relative;
+       overflow: hidden;
+     }
+
+     .card-info::before {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 4px;
+       height: 100%;
+       background: linear-gradient(180deg, #2196F3, #1976D2);
+     }
+
+           .language-toggle {
+        display: flex;
+        gap: 8px;
+        margin-right: 1rem;
+      }
+
+      .lang-btn {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        color: #aaa;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: bold;
+        backdrop-filter: blur(5px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .lang-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+      }
+
+      .lang-btn:hover::before {
+        left: 100%;
+      }
+
+      .lang-btn.active {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        border-color: #4CAF50;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+        transform: scale(1.05);
+      }
+
+      .lang-btn:hover {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        border-color: #4CAF50;
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+      }
   </style>
 </head>
 <body>
@@ -64,6 +347,186 @@
     <h1 class="game-title">✊✋✌ RPS Card Game</h1>
     <p class="game-subtitle">Rock Paper Scissors with a twist!</p>
     <button class="start-btn" onclick="location.href='mode.html'">Start Game</button>
+    <button class="how-to-play-btn" onclick="showHowToPlay()">How to Play</button>
   </div>
+
+  <!-- How to Play Modal -->
+  <div id="howToPlayModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">🎮 How to Play RPS Card Game</h2>
+        <div class="language-toggle">
+          <button class="lang-btn active" onclick="changeLanguage('en')">EN</button>
+          <button class="lang-btn" onclick="changeLanguage('th')">TH</button>
+        </div>
+        <button class="close-btn" onclick="closeHowToPlay()">&times;</button>
+      </div>
+      <div class="how-to-play-content" id="howToPlayContent">
+        <!-- English Content -->
+        <div id="en-content">
+          <div class="game-mode-section">
+            <h3>🎯 Game Modes</h3>
+            <ul>
+              <li><strong>Bot Mode:</strong> Practice against AI opponent</li>
+              <li><strong>PvP Mode:</strong> Play against another player</li>
+              <li><strong>Matchmaking:</strong> Find random opponents online</li>
+            </ul>
+          </div>
+
+          <h3>🎲 Basic Rules</h3>
+          <ul>
+            <li>Each player starts with 3 cards in hand</li>
+            <li>Place 2 cards on the field to form your strategy</li>
+            <li>Choose 1 card to return to your hand</li>
+            <li>The remaining card battles against your opponent's card</li>
+            <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock</li>
+            <li>Loser loses 1 health point</li>
+            <li>First player to lose all health points loses the game</li>
+          </ul>
+
+          <div class="timer-info">
+            <h3>⏰ Timer System</h3>
+            <ul>
+              <li><strong>20 seconds</strong> to select and place 2 cards on the field</li>
+              <li><strong>10 seconds</strong> to choose which card to return to hand</li>
+              <li>If time runs out, the system will auto-select cards for you</li>
+            </ul>
+          </div>
+
+          <div class="card-info">
+            <h3>🃏 Card Strategy</h3>
+            <ul>
+              <li>You can place duplicate cards (e.g., 2 Rock cards)</li>
+              <li>Think about your opponent's possible moves</li>
+              <li>Balance between offensive and defensive strategies</li>
+              <li>Use the return phase to keep your best card for battle</li>
+            </ul>
+          </div>
+
+          <h3>🎯 Winning Strategy</h3>
+          <ul>
+            <li>Pay attention to your opponent's field cards</li>
+            <li>Try to predict what card they'll keep for battle</li>
+            <li>Use the timer to your advantage - don't rush decisions</li>
+            <li>Remember that you can see your opponent's field cards before choosing which to return</li>
+          </ul>
+
+          <h3>🎮 Controls</h3>
+          <ul>
+            <li><strong>Click cards</strong> in your hand to place them on the field</li>
+            <li><strong>Click field cards</strong> to return them to your hand</li>
+            <li><strong>End Turn button</strong> when you're ready to proceed</li>
+            <li><strong>Reset Selection</strong> to clear your field and start over</li>
+          </ul>
+        </div>
+
+        <!-- Thai Content -->
+        <div id="th-content" style="display: none;">
+          <div class="game-mode-section">
+            <h3>🎯 โหมดเกม</h3>
+            <ul>
+              <li><strong>โหมดฝึกซ้อม:</strong> เล่นกับ AI เพื่อฝึกฝน</li>
+              <li><strong>โหมด PvP:</strong> เล่นกับผู้เล่นอื่น</li>
+              <li><strong>โหมดหาคู่:</strong> หาคู่เล่นแบบสุ่มออนไลน์</li>
+            </ul>
+          </div>
+
+           <h3>🎲 กฎการเล่นพื้นฐาน</h3>
+           <ul>
+             <li>ผู้เล่นแต่ละคนเริ่มต้นด้วยไพ่ 3 ใบในมือ</li>
+             <li>วางไพ่ 2 ใบบนสนามเพื่อวางแผนกลยุทธ์</li>
+             <li>เลือกไพ่ 1 ใบกลับขึ้นมือ (ไพ่ที่เหลือจะใช้ต่อสู้)</li>
+             <li>ไพ่ที่เหลือจะต่อสู้กับไพ่ของฝ่ายตรงข้าม</li>
+             <li>ค้อนชนะกรรไกร, กรรไกรชนะกระดาษ, กระดาษชนะค้อน</li>
+             <li>ผู้แพ้เสียเลือด 1 จุด</li>
+             <li>ผู้เล่นที่เสียเลือดหมดก่อนจะแพ้เกม</li>
+           </ul>
+
+           <div class="timer-info">
+             <h3>⏰ ระบบจับเวลา</h3>
+             <ul>
+               <li><strong>20 วินาที</strong> ในการเลือกและวางไพ่ 2 ใบบนสนาม</li>
+               <li><strong>10 วินาที</strong> ในการเลือกไพ่ที่จะกลับขึ้นมือ</li>
+               <li>หากหมดเวลา ระบบจะเลือกไพ่ให้คุณโดยอัตโนมัติ</li>
+             </ul>
+           </div>
+
+           <div class="card-info">
+             <h3>🃏 กลยุทธ์การเล่นไพ่</h3>
+             <ul>
+               <li>คุณสามารถวางไพ่ซ้ำกันได้ (เช่น ค้อน 2 ใบ, กระดาษ 2 ใบ)</li>
+               <li>คิดถึงการวางไพ่ของฝ่ายตรงข้ามและวางแผนรับมือ</li>
+               <li>สร้างสมดุลระหว่างการรุกและการรับ</li>
+               <li>ใช้ช่วงเวลาเลือกไพ่กลับเพื่อเก็บไพ่ที่ดีที่สุดไว้ต่อสู้</li>
+             </ul>
+           </div>
+
+          <h3>🎯 กลยุทธ์การชนะ</h3>
+          <ul>
+            <li>สังเกตไพ่บนสนามของฝ่ายตรงข้าม</li>
+            <li>พยายามคาดเดาว่าฝ่ายตรงข้ามจะเก็บไพ่ใบไหนไว้ต่อสู้</li>
+            <li>ใช้เวลาให้เป็นประโยชน์ - อย่ารีบตัดสินใจ</li>
+            <li>จำไว้ว่าคุณสามารถเห็นไพ่บนสนามของฝ่ายตรงข้ามก่อนเลือกไพ่กลับ</li>
+          </ul>
+
+           <h3>🎮 การควบคุม</h3>
+           <ul>
+             <li><strong>คลิกไพ่</strong> ในมือเพื่อวางบนสนาม</li>
+             <li><strong>คลิกไพ่บนสนาม</strong> เพื่อนำกลับขึ้นมือ</li>
+             <li><strong>ปุ่มจบเทิร์น</strong> เมื่อพร้อมดำเนินการต่อ</li>
+             <li><strong>ปุ่มรีเซ็ต</strong> เพื่อล้างสนามและเริ่มใหม่</li>
+           </ul>
+         </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLanguage = 'en';
+
+    function showHowToPlay() {
+      document.getElementById('howToPlayModal').style.display = 'block';
+    }
+
+    function closeHowToPlay() {
+      document.getElementById('howToPlayModal').style.display = 'none';
+    }
+
+    function changeLanguage(lang) {
+      currentLanguage = lang;
+      
+      // Update button states
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Update content
+      if (lang === 'en') {
+        document.getElementById('en-content').style.display = 'block';
+        document.getElementById('th-content').style.display = 'none';
+        document.getElementById('modalTitle').textContent = '🎮 How to Play RPS Card Game';
+      } else if (lang === 'th') {
+        document.getElementById('en-content').style.display = 'none';
+        document.getElementById('th-content').style.display = 'block';
+        document.getElementById('modalTitle').textContent = '🎮 วิธีเล่นเกม RPS Card Game';
+      }
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+      const modal = document.getElementById('howToPlayModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        document.getElementById('howToPlayModal').style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
